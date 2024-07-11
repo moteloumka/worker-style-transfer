@@ -14,10 +14,10 @@ from PIL import Image
 import torch
 from torchvision import transforms
 import base64
-#import torch.utils.DataLoader as DataLoader
 from data_loader import SingleImageDataset
 from torchvision.transforms import ToPILImage
 import matplotlib.pyplot as plt
+import runpod
 
 # If your handler runs inference on a model, load the model here.
 # You will want models to be loaded into memory before starting serverless.
@@ -109,4 +109,4 @@ def handler(job):
     
 
 
-#runpod.serverless.start({"handler": handler})
+runpod.serverless.start({"handler": handler})
