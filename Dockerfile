@@ -1,29 +1,43 @@
-# Base image -> https://github.com/runpod/containers/blob/main/official-templates/base/Dockerfile
-# DockerHub -> https://hub.docker.com/r/runpod/base/tags
-FROM runpod/base:0.4.0-cuda11.8.0
+# Use Nvidia CUDA base image
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04 as base
 
-# The base image comes with many system dependencies pre-installed to help you get started quickly.
-# Please refer to the base image's Dockerfile for more information before adding additional dependencies.
-# IMPORTANT: The base image overrides the default huggingface cache location.
+# Prevents prompts from packages asking for user input during installation
+ENV DEBIAN_FRONTEND=noninteractive
+# Prefer binary wheels over source distributions for faster pip installations
+ENV PIP_PREFER_BINARY=1
+# Ensures output from python is printed immediately to the terminal without buffering
+ENV PYTHONUNBUFFERED=1 
 
+# Install Python, git and other necessary tools
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git \
+    wget
 
-# --- Optional: System dependencies ---
-# COPY builder/setup.sh /setup.sh
-# RUN /bin/bash /setup.sh && \
-#     rm /setup.sh
+# Clean up to reduce image size
+RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
+# Clone ComfyUI repository
+#RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui
 
 # Python dependencies
 COPY builder/requirements.txt /requirements.txt
-RUN python3.11 -m pip install --upgrade pip && \
-    python3.11 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
     rm /requirements.txt
 
+RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+#RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 \
+#    && pip install --no-cache-dir xformers==0.0.21 
+#RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#RUN pip3 install torchfile
 # NOTE: The base image comes with multiple Python versions pre-installed.
 #       It is reccommended to specify the version of Python when running your code.
 
 
 # Add src files (Worker Template)
 ADD src .
-
-CMD python3.11 -u /handler.py
+ADD test_input.json .
+CMD ["python3", "-u", "/handler.py"]

@@ -103,9 +103,12 @@ def handler(job):
           cImg = styleTransfer(wct.e1, wct.d1, cImg, sImg, csF, wct)
 
         cImg = cImg.data.cpu()
+        
     image = get_img_from_tensor(cImg)
     encoding = image_to_base64(image)
-    return encoding
+
+    result = {"image": encoding}
+    return result
     
 
 
